@@ -1,0 +1,5 @@
+# 复制为 .dev.vars 后填入真实值（.dev.vars 不会被提交）
+# /admin 登录需要 GitHub OAuth App：https://github.com/settings/developers
+# OAuth App 的 Authorization callback URL 填：http://localhost:3000/api/callback
+GITHUB_OAUTH_CLIENT_ID=
+GITHUB_OAUTH_CLIENT_SECRET=

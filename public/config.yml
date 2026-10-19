@@ -1,0 +1,112 @@
+# Decap CMS 配置：/admin 后台的集合与字段定义。
+# 保存时通过 GitHub API 提交 commit，Cloudflare 收到 push 后自动重新构建。
+backend:
+  name: github
+  repo: a3342151701-pixel/personal-website
+  branch: main
+  # 本站自带的 OAuth 代理（src/app/api/auth + api/callback）
+  base_url: https://personal-website.a3342151701.workers.dev/api
+  auth_endpoint: auth
+
+site_url: https://personal-website.a3342151701.workers.dev
+display_url: https://personal-website.a3342151701.workers.dev
+logo_url: https://personal-website.a3342151701.workers.dev/avatar.png
+
+locale: zh_Hans
+
+# 本地 `pnpm cms` 启动 decap-server 后，可直接写本地文件，不走 GitHub OAuth
+local_backend: true
+
+media_folder: public/uploads
+public_folder: /uploads
+
+collections:
+  - name: site
+    label: 站点信息
+    delete: false
+    files:
+      - name: site
+        label: 站点信息
+        file: src/content/site.json
+        fields:
+          - { name: name, label: 姓名, widget: string }
+          - { name: role, label: 职位, widget: string }
+          - { name: bio, label: 一句话介绍, widget: text }
+          - { name: email, label: 邮箱, widget: string }
+          - { name: url, label: 网址, widget: string }
+          - { name: avatar, label: 头像, widget: image }
+          - name: resume
+            label: 简历路径
+            widget: string
+            required: false
+            hint: 把 PDF 放到 public 目录后这里填 /resume.pdf，留空则不显示「下载简历」
+          - name: nav
+            label: 导航
+            widget: list
+            fields:
+              - { name: label, label: 名称, widget: string }
+              - { name: href, label: 链接, widget: string }
+          - name: socials
+            label: 社交链接
+            widget: list
+            fields:
+              - { name: label, label: 名称, widget: string }
+              - { name: href, label: 链接, widget: string }
+              - name: icon
+                label: 图标
+                widget: select
+                options: [github, mail]
+
+  - name: projects
+    label: 项目
+    delete: false
+    files:
+      - name: projects
+        label: 项目列表
+        file: src/content/projects.json
+        fields:
+          - name: projects
+            label: 项目
+            widget: list
+            summary: "{{fields.title}}"
+            fields:
+              - {
+                  name: slug,
+                  label: 标识,
+                  widget: string,
+                  hint: 英文短横线，唯一,
+                }
+              - { name: title, label: 名称, widget: string }
+              - { name: summary, label: 简介, widget: text }
+              - name: tech
+                label: 技术标签
+                widget: list
+                hint: 用英文逗号分隔，例如 JavaScript, Chrome Extension
+              - name: links
+                label: 链接
+                widget: object
+                fields:
+                  - {
+                      name: repo,
+                      label: 源码仓库,
+                      widget: string,
+                      required: false,
+                    }
+                  - {
+                      name: demo,
+                      label: 在线演示,
+                      widget: string,
+                      required: false,
+                    }
+              - {
+                  name: featured,
+                  label: 首页精选,
+                  widget: boolean,
+                  default: true,
+                }
+              - name: startDate
+                label: 开始日期
+                widget: datetime
+                date_format: "YYYY-MM-DD"
+                time_format: false
+                required: false

@@ -11,9 +11,9 @@
 | 前端框架      | **Next.js 15（App Router）+ React 19 + TypeScript（strict）**                      | 以服务端组件为主，SEO 友好，静态导出即可满足需求                 |
 | 样式方案      | **Tailwind CSS v4** + CSS 变量（design tokens）                                    | 用 `@theme` 定义颜色/圆角/缓动，组件内只引用 token，不硬编码色值 |
 | 动效          | CSS transition + `IntersectionObserver`；星空用原生 Canvas                         | 不引入重型动画库，控制首屏体积                                   |
-| 内容管理      | **仓库内 MDX 文件**（`gray-matter` 解析 frontmatter）                              | 博客/项目随 git 提交，构建时读取，无需 CMS                       |
+| 内容管理      | **Decap CMS（`/admin`）+ 仓库内 JSON 文件**                                        | 表单保存时通过 GitHub API 提交 commit，触发 Cloudflare 重建；无数据库             |
 | Markdown 渲染 | `next-mdx-remote/rsc` + `remark-gfm` + `rehype-pretty-code`(Shiki) + `rehype-slug` | 服务端渲染，代码高亮不进客户端 bundle                            |
-| 后端          | **Next.js Route Handler / Server Action**（仅联系表单一个接口）                    | 无独立后端服务，不做用户系统                                     |
+| 后端          | **Next.js Route Handler / Server Action**（联系表单 + CMS OAuth 回调）              | 无独立后端服务，不做用户系统；OAuth 密钥只在服务端读取            |
 | 数据库        | **无数据库**（内容即数据，存于 git）                                               | 表单不落库，校验后转发邮件；如需留档再接入 D1/Upstash            |
 | 邮件          | Resend（或任意 SMTP 服务）                                                         | 仅在服务端读取 API Key                                           |
 | 校验          | `zod`                                                                              | 表单与 frontmatter 共用 schema                                   |
@@ -39,7 +39,11 @@ personal-website/
 │  │  │  ├─ [slug]/page.tsx         # MDX 详情 + 代码高亮 + TOC
 │  │  │  └─ tags/[tag]/page.tsx     # 按标签归档
 │  │  ├─ contact/page.tsx           # 联系页（邮箱复制 / 社交 / 表单）
-│  │  ├─ api/contact/route.ts       # POST 联系表单
+│  │  ├─ admin/page.tsx             # Decap CMS 入口（noindex）
+│  │  ├─ api/
+│  │  │  ├─ contact/route.ts        # POST 联系表单
+│  │  │  ├─ auth/route.ts           # GitHub OAuth 授权跳转（CMS 登录）
+│  │  │  └─ callback/route.ts       # GitHub OAuth 回调，把 token 交给 CMS
 │  │  ├─ sitemap.ts / robots.ts / rss.xml/route.ts
 │  │  ├─ opengraph-image.tsx
 │  │  └─ globals.css                # @theme token、基础样式、星空降级
@@ -50,17 +54,19 @@ personal-website/
 │  │  └─ ui/                        # Button、Card、Tag、SectionHeading、Prose
 │  ├─ content/
 │  │  ├─ blog/*.mdx                 # 文章源文件
-│  │  ├─ projects/*.mdx             # 项目条目（或 projects.ts）
+│  │  ├─ site.json                  # 站点信息（CMS 可编辑）
+│  │  ├─ projects.json              # 项目列表（CMS 可编辑）
 │  │  ├─ skills.ts                  # 技能分组数据
 │  │  └─ timeline.ts                # 经历/教育时间线
 │  ├─ lib/
 │  │  ├─ content.ts                 # 读取 + 缓存 posts/projects
 │  │  ├─ mdx.ts                     # frontmatter schema、TOC 生成、阅读时长
-│  │  ├─ site.ts                    # 站点元信息、社交链接、导航配置
+│  │  ├─ site.ts                    # 站点元信息（从 content/site.json 读入并校验）
 │  │  ├─ validation.ts              # zod schema（表单/frontmatter）
 │  │  └─ utils.ts                   # cn()、日期格式化
 │  └─ types/index.ts                # 全局类型
 ├─ public/                          # avatar、resume.pdf、静态插图
+│  └─ config.yml                   # Decap CMS 配置（集合与字段定义，/admin 读取 /config.yml）
 ├─ tests/
 │  ├─ unit/                         # lib 层
 │  └─ e2e/                          # Playwright
@@ -148,7 +154,17 @@ const contactSchema = z.object({
 });
 ```
 
-部署所需的环境变量（只存服务端）：`RESEND_API_KEY`、`CONTACT_TO_EMAIL`、`SITE_URL`。
+部署所需的环境变量（只存服务端）：`RESEND_API_KEY`、`CONTACT_TO_EMAIL`、`SITE_URL`、
+`GITHUB_OAUTH_CLIENT_ID`、`GITHUB_OAUTH_CLIENT_SECRET`（后两个仅用于 `/admin` 登录）。
+
+### 内容文件（CMS 可写）
+
+`/admin` 后台直接编辑以下两个 JSON，类型仍由 `src/types/index.ts` 约束：
+
+- `src/content/site.json`：`SiteConfig` 对象（姓名、职位、简介、邮箱、头像、导航、社交链接）。
+- `src/content/projects.json`：`{ "projects": Project[] }`，`lib` 层读出后断言为 `Project[]`。
+
+组件不直接 `import` JSON，统一经 `lib/site.ts` 与 `content/projects.ts` 暴露，保证类型与默认值集中。
 
 ---
 
@@ -192,3 +208,10 @@ const contactSchema = z.object({
 8. **构建与部署**
    - 页面默认全静态预渲染；Cloudflare Workers 不支持 Node 的 ISR 依赖，因此避免使用 `revalidate` 以外的动态能力，内容更新靠重新部署。
    - 部署前跑 `pnpm build` + 类型检查 + e2e；静态资源（`_next/static`、字体、图片）单独缓存，`resume.pdf` 设置下载头。
+
+9. **内容管理后台（Decap CMS + GitHub OAuth）**
+   - `/admin` 只加载 Decap 的静态脚本（CDN）+ `config.yml`，不进入主站 bundle；页面 `noindex`。
+   - 登录链路：CMS → `/api/auth`（校验 `site_id` 来源、写 state cookie）→ GitHub 授权页 → `/api/callback`（校验 state、用 `client_secret` 换 token）→ 用 `postMessage` 把 token 交回 CMS。
+   - `client_secret` 只在 Worker 环境变量中；回调页不打印、不落库任何 token；state 用 HttpOnly + SameSite=Lax cookie，防 CSRF。
+   - 保存内容时 Decap 通过 GitHub Contents API 提交 commit，Cloudflare 收到 push 后自动重建（约 1–3 分钟）。因此后台是「编辑 → 提交 → 重建」，不是即时生效。
+   - 未配置 OAuth 环境变量时，`/api/auth` 返回带配置说明的页面，而不是 500 白屏。
