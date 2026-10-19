@@ -2,10 +2,13 @@ import type { SiteConfig } from "@/types";
 
 /** 全站文案与链接的唯一来源，组件内不硬编码。 */
 export const siteConfig = {
-  name: "你的名字",
+  // TODO: 换成真实姓名（GitHub 资料里未填写 name）
+  name: "a3342151701-pixel",
   role: "前端开发者",
-  bio: "一句话介绍自己：正在搭建的个人展示网站。",
+  bio: "学生，平时用前端技术做一些实用的小工具：课程表、随机点名、电商商品图下载扩展。",
+  // TODO: 换成常用邮箱（GitHub 资料里未公开 email）
   email: "you@example.com",
+  // TODO: 填 Cloudflare 部署后的实际地址
   url: "https://example.com",
   avatar: "/avatar.png",
   resume: "/resume.pdf",
@@ -17,7 +20,10 @@ export const siteConfig = {
     { label: "联系", href: "/contact" },
   ],
   socials: [
-    { label: "GitHub", href: "https://github.com/your-name", icon: "github" },
-    { label: "邮箱", href: "mailto:you@example.com", icon: "mail" },
+    {
+      label: "GitHub",
+      href: "https://github.com/a3342151701-pixel",
+      icon: "github",
+    },
   ],
 } as const satisfies SiteConfig;
