@@ -1,0 +1,5 @@
+# pnpm 10+ 默认会在依赖的 postinstall 被跳过时报错；
+# eslint 的解析器依赖带可选 postinstall，本项目不需要执行，这里降级为警告。
+strictDepBuilds: false
+ignoredBuiltDependencies:
+  - unrs-resolver
