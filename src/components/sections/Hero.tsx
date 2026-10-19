@@ -8,9 +8,11 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
  * 简历 PDF 还没提供时隐藏「下载简历」入口：
  * 资源放在 public/ 后重新构建即可自动出现，不需要改代码。
  */
-const resumeAvailable = existsSync(
-  path.join(process.cwd(), "public", siteConfig.resume.replace(/^\//, "")),
-);
+const resumeAvailable =
+  siteConfig.resume.length > 0 &&
+  existsSync(
+    path.join(process.cwd(), "public", siteConfig.resume.replace(/^\//, "")),
+  );
 
 export function Hero() {
   return (

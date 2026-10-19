@@ -1,41 +1,29 @@
+import projectData from "@/content/projects.json";
 import type { Project } from "@/types";
 
-/** 项目列表：内容来自 GitHub 仓库，新增项目在此追加。 */
-export const projects: Project[] = [
-  {
-    slug: "course-timetable",
-    title: "课程表",
-    summary:
-      "面向学生的课程表网页：自由编辑课程、导入 Excel 课表、每门课自动配色。",
-    tech: ["JavaScript"],
-    links: {
-      repo: "https://github.com/a3342151701-pixel/course-timetable",
-    },
-    featured: true,
-    startDate: "2026-10-14",
-  },
-  {
-    slug: "rollcall",
-    title: "随机点名",
-    summary:
-      "先准备一份待点名名单，再从名单里随机抽若干个名字；纯前端实现，无需安装、无需联网。",
-    tech: ["JavaScript"],
-    links: {
-      repo: "https://github.com/a3342151701-pixel/rollcall",
-    },
-    featured: true,
-    startDate: "2026-10-14",
-  },
-  {
-    slug: "ecommerce-image-downloader",
-    title: "电商商品图下载扩展",
-    summary:
-      "Chrome 扩展：在淘宝、京东、拼多多商家版的商品详情页提取商品图，勾选后下载为 PNG。",
-    tech: ["JavaScript", "Chrome Extension"],
-    links: {
-      repo: "https://github.com/a3342151701-pixel/ecommerce-image-downloader",
-    },
-    featured: true,
-    startDate: "2026-10-18",
-  },
-];
+/**
+ * Decap 的 list 控件可能把标签存成字符串或 `{ tech }` 对象，
+ * 这里统一成 string[]，避免后台保存一次就让构建挂掉。
+ */
+function normalizeTech(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (typeof item === "string") {
+      return [item];
+    }
+    if (item && typeof item === "object" && "tech" in item) {
+      const tech = (item as { tech: unknown }).tech;
+      return typeof tech === "string" ? [tech] : [];
+    }
+    return [];
+  });
+}
+
+/** 项目列表，数据由 `/admin` 后台写入 `src/content/projects.json`。 */
+export const projects: Project[] = projectData.projects.map((project) => ({
+  ...project,
+  tech: normalizeTech(project.tech),
+}));
