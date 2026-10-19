@@ -18,6 +18,8 @@ pnpm install      # 安装依赖
 pnpm dev          # 本地开发（http://localhost:3000）
 pnpm build        # 生产构建（所有页面静态预渲染）
 pnpm start        # 运行生产构建
+pnpm preview      # 用 Cloudflare Workers 运行时本地预览（OpenNext）
+pnpm deploy       # 构建并部署到 Cloudflare Workers
 pnpm lint         # ESLint
 pnpm typecheck    # 仅做类型检查
 pnpm format       # Prettier 格式化

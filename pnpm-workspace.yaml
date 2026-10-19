@@ -1,3 +1,8 @@
+# 单包项目也保留 workspace 文件：Cloudflare 构建镜像使用 pnpm 9，
+# 该版本要求 packages 字段存在且非空。
+packages:
+  - "."
+
 # pnpm 10+ 默认会在依赖的 postinstall 被跳过时报错；
 # eslint 的解析器依赖带可选 postinstall，本项目不需要执行，这里降级为警告。
 strictDepBuilds: false
