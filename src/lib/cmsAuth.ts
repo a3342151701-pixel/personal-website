@@ -1,25 +1,31 @@
 /** Decap CMS 登录约定的 cookie 名与 OAuth 协议封装。 */
 export const OAUTH_STATE_COOKIE = "cms_oauth_state";
 
+/** Decap 传的 site_id 有时带协议、有时只有主机名，统一取 host 再比较。 */
+function toHost(value: string): string | null {
+  try {
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.host;
+  } catch {
+    return null;
+  }
+}
+
 /** 只容许本站与本地开发地址发起登录，避免被别的站点当作 OAuth 代理使用。 */
 export function isAllowedSiteId(
   siteId: string | null,
   siteUrl: string,
 ): boolean {
-  if (!siteId) {
+  const host = siteId ? toHost(siteId) : null;
+  if (!host) {
     return false;
   }
 
-  try {
-    const allowed = new Set([
-      new URL(siteUrl).origin,
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-    ]);
-    return allowed.has(new URL(siteId).origin);
-  } catch {
-    return false;
-  }
+  const allowed = [toHost(siteUrl), "localhost:3000", "127.0.0.1:3000"].filter(
+    (item): item is string => Boolean(item),
+  );
+
+  return allowed.includes(host);
 }
 
 /**
