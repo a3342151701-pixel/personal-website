@@ -20,5 +20,10 @@
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
+	},
+	// Client ID 会出现在授权地址里，属于公开信息；写在配置里才能避免每次 Git 部署把面板变量覆盖掉。
+	// Client Secret 不要写在这里，用 `wrangler secret put GITHUB_OAUTH_CLIENT_SECRET` 或面板的密钥保存。
+	"vars": {
+		"GITHUB_OAUTH_CLIENT_ID": "Ov23liOVEX23gWaWg1Ei"
 	}
 }
