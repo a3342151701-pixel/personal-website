@@ -215,3 +215,5 @@ const contactSchema = z.object({
    - `client_secret` 只在 Worker 环境变量中；回调页不打印、不落库任何 token；state 用 HttpOnly + SameSite=Lax cookie，防 CSRF。
    - 保存内容时 Decap 通过 GitHub Contents API 提交 commit，Cloudflare 收到 push 后自动重建（约 1–3 分钟）。因此后台是「编辑 → 提交 → 重建」，不是即时生效。
    - 未配置 OAuth 环境变量时，`/api/auth` 返回带配置说明的页面，而不是 500 白屏。
+   - `config.yml` 的 `base_url` 必须写成纯 origin（`https://域名`），接口路径放进 `auth_endpoint`（`api/auth`）。Decap 用 `base_url` 严格比对 `postMessage` 的 `event.origin`，多写 `/api` 会让握手永远匹配不上，登录弹窗卡在回调页。
+   - Client ID 写在 `wrangler.jsonc` 的 `vars` 里（授权链接里本来就会暴露，属公开信息）；Git 部署会按配置覆盖变量，只在面板手加的明文变量会丢。Client Secret 走面板密钥或 `wrangler secret put`。
